@@ -1,4 +1,22 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+
 export default function Home() {
+
+  const [query, setQuery] = useState("");
+
+  function handleSearch(event: FormEvent) {
+    event.preventDefault();
+
+    if (!query.trim()) {
+      window.location.href = "/mods";
+      return;
+    }
+
+    window.location.href = `/mods?q=${encodeURIComponent(query.trim())}`;
+  }
+
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}
@@ -12,7 +30,7 @@ export default function Home() {
             <a href="/mods" className="transition hover:text-white">
               Моды
             </a>
-            <a href="#" className="transition hover:text-white">
+            <a href="/build" className="transition hover:text-white">
               Моя сборка
             </a>
             <a href="#" className="transition hover:text-white">
@@ -44,20 +62,29 @@ export default function Home() {
           </p>
 
           {/* Search */}
-          <div className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 sm:flex-row">
+          <form
+            onSubmit={handleSearch}
+            className="mx-auto mt-10 flex max-w-2xl flex-col gap-3 sm:flex-row"
+          >
             <div className="flex flex-1 items-center rounded-xl border border-white/10 bg-white/5 px-4 shadow-2xl shadow-black/20">
               <span className="mr-3 text-zinc-500">⌕</span>
+
               <input
                 type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
                 placeholder="Найти мод..."
                 className="w-full bg-transparent py-4 text-white outline-none placeholder:text-zinc-600"
               />
             </div>
 
-            <button className="rounded-xl bg-violet-500 px-7 py-4 font-medium transition hover:bg-violet-400">
+            <button
+              type="submit"
+              className="rounded-xl bg-violet-500 px-7 py-4 font-medium transition hover:bg-violet-400"
+            >
               Найти моды
             </button>
-          </div>
+          </form>
         </div>
       </section>
 

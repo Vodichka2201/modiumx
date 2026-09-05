@@ -1,14 +1,20 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import {
+  addToBuild,
+  getBuild,
+  type BuildMod,
+} from "@/app/lib/build";
 
 type Mod = {
   project_id: string;
+  slug: string;
   title: string;
+  author: string;
   description: string;
   icon_url?: string;
   downloads: number;
-  author: string;
 };
 
 type SearchResponse = {
@@ -20,18 +26,40 @@ export default function ModsPage() {
   const [mods, setMods] = useState<Mod[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [build, setBuild] = useState<BuildMod[]>([]);
 
-  async function searchMods(event: FormEvent) {
-    event.preventDefault();
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = params.get("q")?.trim();
 
-    if (!query.trim()) return;
+    if (initialQuery) {
+      setQuery(initialQuery);
+      searchMods(initialQuery);
+    }
+
+    setBuild(getBuild());
+  }, []);
+
+  async function searchMods(
+    eventOrQuery?: FormEvent | string
+  ) {
+    if (typeof eventOrQuery !== "string") {
+      eventOrQuery?.preventDefault();
+    }
+
+    const searchQuery =
+      typeof eventOrQuery === "string"
+        ? eventOrQuery.trim()
+        : query.trim();
+
+    if (!searchQuery) return;
 
     setLoading(true);
     setError("");
 
     try {
       const response = await fetch(
-        `/api/mods?q=${encodeURIComponent(query.trim())}`
+        `/api/mods?q=${encodeURIComponent(searchQuery)}`
       );
 
       if (!response.ok) {
@@ -59,7 +87,7 @@ export default function ModsPage() {
             <a href="/mods" className="text-white">
               Моды
             </a>
-            <a href="#" className="transition hover:text-white">
+            <a href="/build" className="transition hover:text-white">
               Моя сборка
             </a>
             <a href="#" className="transition hover:text-white">
@@ -158,8 +186,25 @@ export default function ModsPage() {
                       {mod.downloads.toLocaleString("ru-RU")} загрузок
                     </span>
 
-                    <button className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm transition hover:bg-violet-500 hover:text-white">
-                      + Добавить
+                    <button
+                      onClick={() => {
+                        const updated = addToBuild({
+                          id: mod.project_id,
+                          title: mod.title,
+                          author: mod.author,
+                          description: mod.description,
+                          icon_url: mod.icon_url ?? null,
+                          downloads: mod.downloads,
+                          project_url: `https://modrinth.com/mod/${mod.slug}`,
+                        });
+
+                        setBuild(updated);
+                      }}
+                      className="rounded-lg bg-white px-3 py-2 text-sm font-medium text-black transition hover:bg-zinc-200"
+                    >
+                      {build.some((item) => item.id === mod.project_id)
+                        ? "✓ В сборке"
+                        : "+ Добавить"}
                     </button>
                   </div>
                 </article>
