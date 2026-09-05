@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isVersionInRange } from "@/app/lib/minecraft-versions";
 
 type BuildMod = {
   id: string;
@@ -8,6 +9,7 @@ type BuildMod = {
 type ModrinthDependency = {
   project_id: string | null;
   version_id: string | null;
+  file_name: string | null;
   dependency_type:
     | "required"
     | "optional"
@@ -44,6 +46,8 @@ type Combination = {
 const API = "https://api.modrinth.com/v2";
 
 const LOADERS = ["fabric", "forge", "neoforge"];
+const DEFAULT_MIN_VERSION = "1.19";
+const DEFAULT_MAX_VERSION = "26";
 
 async function getVersions(projectId: string) {
   const response = await fetch(
@@ -65,6 +69,16 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const mods = body.mods as BuildMod[];
+
+    const minVersion =
+    typeof body.min_version === "string"
+        ? body.min_version
+        : DEFAULT_MIN_VERSION;
+
+    const maxVersion =
+    typeof body.max_version === "string"
+        ? body.max_version
+        : DEFAULT_MAX_VERSION;
 
     if (!Array.isArray(mods) || mods.length === 0) {
       return NextResponse.json(
@@ -89,7 +103,15 @@ export async function POST(request: NextRequest) {
         }
 
         for (const gameVersion of version.game_versions) {
-          minecraftVersions.add(gameVersion);
+            if (
+                isVersionInRange(
+                gameVersion,
+                minVersion,
+                maxVersion
+                )
+            ) {
+                minecraftVersions.add(gameVersion);
+            }
         }
       }
     }

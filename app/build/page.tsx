@@ -25,14 +25,46 @@ type Combination = {
   mods: CompatibilityMod[];
 };
 
+type MinecraftVersionResponse = {
+  versions: string[];
+};
+
 export default function BuildPage() {
   const [combinations, setCombinations] = useState<Combination[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState("");
   const [build, setBuild] = useState<BuildMod[]>([]);
+  const [minecraftVersions, setMinecraftVersions] = useState<string[]>([]);
+  const [minVersion, setMinVersion] = useState("1.19");
+  const [maxVersion, setMaxVersion] = useState("26");
 
   useEffect(() => {
     setBuild(getBuild());
+  }, []);
+
+  useEffect(() => {
+    async function loadVersions() {
+        try {
+        const response = await fetch(
+            "/api/minecraft/versions"
+        );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data: MinecraftVersionResponse =
+            await response.json();
+
+        setMinecraftVersions(data.versions);
+        } catch {
+        console.error(
+            "Failed to load Minecraft versions"
+        );
+        }
+    }
+
+    loadVersions();
   }, []);
 
   async function analyzeBuild() {
@@ -50,10 +82,12 @@ export default function BuildPage() {
             "Content-Type": "application/json",
         },
         body: JSON.stringify({
-            mods: build.map((mod) => ({
+          mods: build.map((mod) => ({
             id: mod.id,
             title: mod.title,
-            })),
+          })),
+          min_version: minVersion,
+          max_version: maxVersion,
         }),
         });
 
@@ -137,6 +171,61 @@ export default function BuildPage() {
           </div>
         ) : (
             <>
+
+            <div className="mb-6 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-5">
+                <div className="mb-4">
+                    <h2 className="font-semibold">
+                    Версии Minecraft
+                    </h2>
+
+                    <p className="mt-1 text-sm text-zinc-500">
+                    Ограничь диапазон версий для анализа.
+                    </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                    <label className="block">
+                    <span className="mb-2 block text-sm text-zinc-400">
+                        От
+                    </span>
+
+                    <select
+                        value={minVersion}
+                        onChange={(event) =>
+                        setMinVersion(event.target.value)
+                        }
+                        className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm outline-none focus:border-zinc-500"
+                    >
+                        {minecraftVersions.map((version) => (
+                        <option key={version} value={version}>
+                            {version}
+                        </option>
+                        ))}
+                    </select>
+                    </label>
+
+                    <label className="block">
+                    <span className="mb-2 block text-sm text-zinc-400">
+                        До
+                    </span>
+
+                    <select
+                        value={maxVersion}
+                        onChange={(event) =>
+                        setMaxVersion(event.target.value)
+                        }
+                        className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm outline-none focus:border-zinc-500"
+                    >
+                        {minecraftVersions.map((version) => (
+                        <option key={version} value={version}>
+                            {version}
+                        </option>
+                        ))}
+                    </select>
+                    </label>
+                </div>
+            </div>
+
             <div className="mb-8 flex flex-wrap items-center gap-4">
                 <button
                     onClick={analyzeBuild}
@@ -193,7 +282,7 @@ export default function BuildPage() {
               </article>
             ))}
           </div>
-          
+
           {combinations.length > 0 && (
             <section className="mt-12">
                 <div className="mb-6">
