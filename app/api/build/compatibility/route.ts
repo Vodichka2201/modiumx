@@ -26,12 +26,22 @@ type ModrinthVersion = {
   version_type: "release" | "beta" | "alpha";
 };
 
+type CompatibilityDependency = {
+  project_id: string | null;
+  version_id: string | null;
+  type: ModrinthDependency["dependency_type"];
+  title: string | null;
+  available: boolean;
+};
+
 type CompatibilityMod = {
   id: string;
   title: string;
   compatible: boolean;
   version_id: string | null;
   reason: string | null;
+  status: "release" | "beta" | "missing";
+  dependencies: CompatibilityDependency[];
 };
 
 type Combination = {
@@ -45,9 +55,8 @@ type Combination = {
 
 const API = "https://api.modrinth.com/v2";
 
-const LOADERS = ["fabric", "forge", "neoforge"];
+const LOADERS = ["fabric", "neoforge", "forge"];
 const DEFAULT_MIN_VERSION = "1.19";
-const DEFAULT_MAX_VERSION = "26";
 
 async function getVersions(projectId: string) {
   const response = await fetch(
@@ -64,21 +73,120 @@ async function getVersions(projectId: string) {
   return (await response.json()) as ModrinthVersion[];
 }
 
+async function getProject(projectId: string) {
+  const response = await fetch(`${API}/project/${projectId}`, {
+    next: { revalidate: 300 },
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return (await response.json()) as {
+    id: string;
+    title: string;
+  };
+}
+
+function getAvailableMinecraftVersions(
+  projectVersions: {
+    mod: BuildMod;
+    versions: ModrinthVersion[];
+  }[],
+  minVersion: string,
+  maxVersion?: string
+) {
+  const versions = new Set<string>();
+
+  
+  
+  for (const item of projectVersions) {
+    for (const version of item.versions) {
+      if (
+        version.version_type !== "release" &&
+        version.version_type !== "beta"
+      ) {
+        continue;
+      }
+
+      for (const gameVersion of version.game_versions) {
+        const insideRange = maxVersion
+          ? isVersionInRange(
+              gameVersion,
+              minVersion,
+              maxVersion
+            )
+          : true;
+
+        if (insideRange) {
+          versions.add(gameVersion);
+        }
+      }
+    }
+  }
+
+  return [...versions];
+}
+
+function getAvailableLoaders(
+  projectVersions: {
+    mod: BuildMod;
+    versions: ModrinthVersion[];
+  }[]
+) {
+  const loaders = new Set<string>();
+
+  for (const item of projectVersions) {
+    for (const version of item.versions) {
+      if (
+        version.version_type !== "release" &&
+        version.version_type !== "beta"
+      ) {
+        continue;
+    }
+
+      for (const loader of version.loaders) {
+        if (LOADERS.includes(loader)) {
+          loaders.add(loader);
+        }
+      }
+    }
+  }
+
+  return [...loaders];
+}
+
+function hasCompatibleDependencyVersion(
+  dependency: ModrinthDependency,
+  projectVersions: Map<string, ModrinthVersion[]>,
+  minecraftVersion: string,
+  loader: string
+) {
+  if (!dependency.project_id) {
+    return false;
+  }
+
+  const dependencyVersions = projectVersions.get(
+    dependency.project_id
+  );
+
+  if (!dependencyVersions) {
+    return false;
+  }
+
+  return dependencyVersions.some(
+    (version) =>
+      version.version_type === "release" &&
+      version.game_versions.includes(minecraftVersion) &&
+      version.loaders.includes(loader)
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
     const mods = body.mods as BuildMod[];
-
-    const minVersion =
-    typeof body.min_version === "string"
-        ? body.min_version
-        : DEFAULT_MIN_VERSION;
-
-    const maxVersion =
-    typeof body.max_version === "string"
-        ? body.max_version
-        : DEFAULT_MAX_VERSION;
 
     if (!Array.isArray(mods) || mods.length === 0) {
       return NextResponse.json(
@@ -87,6 +195,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const minVersion =
+      typeof body.min_version === "string"
+        ? body.min_version
+        : DEFAULT_MIN_VERSION;
+
+    const maxVersion =
+      typeof body.max_version === "string"
+        ? body.max_version
+        : undefined;
+
     const projectVersions = await Promise.all(
       mods.map(async (mod) => ({
         mod,
@@ -94,69 +212,183 @@ export async function POST(request: NextRequest) {
       }))
     );
 
-    const minecraftVersions = new Set<string>();
+    const projects = new Map<
+      string,
+      {
+        id: string;
+        title: string;
+      }
+    >();
+
+    await Promise.all(
+      projectVersions.map(async (item) => {
+        const project = await getProject(item.mod.id);
+
+        if (project) {
+          projects.set(project.id, project);
+        }
+      })
+    );
+
+    /*
+     * Все версии проектов, которые есть в сборке.
+     * Нужны для проверки dependencies.
+     */
+    const versionsByProject = new Map<
+      string,
+      ModrinthVersion[]
+    >();
 
     for (const item of projectVersions) {
-      for (const version of item.versions) {
-        if (version.version_type !== "release") {
-          continue;
-        }
-
-        for (const gameVersion of version.game_versions) {
-            if (
-                isVersionInRange(
-                gameVersion,
-                minVersion,
-                maxVersion
-                )
-            ) {
-                minecraftVersions.add(gameVersion);
-            }
-        }
-      }
+      versionsByProject.set(item.mod.id, item.versions);
     }
+
+    const minecraftVersions = getAvailableMinecraftVersions(
+      projectVersions,
+      minVersion,
+      maxVersion
+    );
+
+    const availableLoaders = getAvailableLoaders(
+      projectVersions
+    );
 
     const combinations: Combination[] = [];
 
     for (const minecraftVersion of minecraftVersions) {
-      for (const loader of LOADERS) {
+      for (const loader of availableLoaders) {
         const resultMods: CompatibilityMod[] = [];
 
         for (const item of projectVersions) {
-          const matchingVersion = item.versions.find(
+            const releaseVersion = item.versions.find(
             (version) =>
-              version.version_type === "release" &&
-              version.game_versions.includes(minecraftVersion) &&
-              version.loaders.includes(loader)
-          );
+                version.version_type === "release" &&
+                version.game_versions.includes(minecraftVersion) &&
+                version.loaders.includes(loader)
+            );
 
+            const betaVersion = item.versions.find(
+            (version) =>
+                version.version_type === "beta" &&
+                version.game_versions.includes(minecraftVersion) &&
+                version.loaders.includes(loader)
+            );
+
+            const matchingVersion = releaseVersion ?? betaVersion;
+
+          /*
+           * У этого мода вообще нет версии под
+           * конкретные Minecraft + loader.
+           */
           if (!matchingVersion) {
             resultMods.push({
-              id: item.mod.id,
-              title: item.mod.title,
-              compatible: false,
-              version_id: null,
-              reason: "Нет версии для этой Minecraft/loader комбинации",
+                id: item.mod.id,
+                title: item.mod.title,
+                compatible: false,
+                version_id: null,
+                reason:
+                "Нет версии для этой Minecraft/loader комбинации",
+                status: "missing",
+                dependencies: [],
             });
+
+
+            continue;
+            }
+
+            const status: "release" | "beta" =
+                matchingVersion.version_type === "release"
+                    ? "release"
+                    : "beta";
+
+
+          const dependencies: CompatibilityDependency[] =
+            matchingVersion.dependencies.map((dependency) => {
+              const dependencyProject =
+                dependency.project_id
+                  ? projects.get(dependency.project_id)
+                  : null;
+
+              /*
+               * Если dependency есть в сборке,
+               * проверяем не только её наличие,
+               * но и наличие подходящей версии.
+               */
+              const dependencyAvailable =
+                dependency.project_id
+                  ? hasCompatibleDependencyVersion(
+                      dependency,
+                      versionsByProject,
+                      minecraftVersion,
+                      loader
+                    )
+                  : false;
+
+              return {
+                project_id: dependency.project_id,
+                version_id: dependency.version_id,
+                type: dependency.dependency_type,
+                title: dependencyProject?.title ?? null,
+                available:
+                  dependency.dependency_type === "optional" ||
+                  dependency.dependency_type === "embedded" ||
+                  dependencyAvailable,
+              };
+            });
+
+          /*
+           * Required dependency отсутствует
+           * или присутствует, но не имеет подходящей версии.
+           */
+          const missingRequiredDependency =
+            dependencies.find(
+              (dependency) =>
+                dependency.type === "required" &&
+                !dependency.available
+            );
+
+          if (missingRequiredDependency) {
+                resultMods.push({
+                id: item.mod.id,
+                title: item.mod.title,
+                compatible: status === "release",
+                version_id: matchingVersion.id,
+                reason:
+                    status === "beta"
+                    ? "Есть только beta-версия"
+                    : null,
+                status,
+                dependencies,
+                });
 
             continue;
           }
 
-          const incompatibleWithBuild =
-            matchingVersion.dependencies.some(
+          /*
+           * Проверяем incompatible dependencies.
+           */
+          const incompatibleDependency =
+            dependencies.find(
               (dependency) =>
-                dependency.dependency_type === "incompatible" &&
+                dependency.type === "incompatible" &&
                 dependency.project_id &&
-                mods.some((mod) => mod.id === dependency.project_id)
+                mods.some(
+                  (mod) =>
+                    mod.id === dependency.project_id
+                )
             );
 
-          if (incompatibleWithBuild) {
+          if (incompatibleDependency) {
             resultMods.push({
               id: item.mod.id,
               title: item.mod.title,
               compatible: false,
               version_id: matchingVersion.id,
-              reason: "Несовместим с другим модом в сборке",
+              reason: incompatibleDependency.title
+                ? `Несовместим с ${incompatibleDependency.title}`
+                : "Несовместим с другим модом в сборке",
+                status,
+              dependencies,
             });
 
             continue;
@@ -168,6 +400,8 @@ export async function POST(request: NextRequest) {
             compatible: true,
             version_id: matchingVersion.id,
             reason: null,
+            status,
+            dependencies,
           });
         }
 
@@ -186,22 +420,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    /*
+     * Сначала полностью совместимые.
+     * Затем частично совместимые.
+     * Внутри группы — новые Minecraft версии первыми.
+     */
     combinations.sort((a, b) => {
       if (a.compatible !== b.compatible) {
         return a.compatible ? -1 : 1;
       }
 
-      return b.compatible_count - a.compatible_count;
+      if (a.compatible_count !== b.compatible_count) {
+        return b.compatible_count - a.compatible_count;
+      }
+
+      return b.minecraft_version.localeCompare(
+        a.minecraft_version,
+        undefined,
+        {
+          numeric: true,
+        }
+      );
     });
 
     return NextResponse.json({
       combinations,
     });
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Compatibility analysis error:",
+      error
+    );
 
     return NextResponse.json(
-      { error: "Failed to analyze compatibility" },
+      {
+        error: "Failed to analyze compatibility",
+      },
       { status: 500 }
     );
   }
