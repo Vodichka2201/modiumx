@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   addToBuild,
   getBuild,
@@ -8,17 +8,21 @@ import {
 } from "@/app/lib/build";
 
 type Mod = {
+  id: string;
   project_id: string;
-  slug: string;
+  source: "modrinth" | "curseforge";
   title: string;
+  slug: string | null;
   author: string;
   description: string;
-  icon_url?: string;
+  icon_url: string | null;
   downloads: number;
+  project_url: string;
 };
 
 type SearchResponse = {
-  hits: Mod[];
+  results: Mod[];
+  total: number;
 };
 
 export default function ModsPage() {
@@ -29,51 +33,64 @@ export default function ModsPage() {
   const [build, setBuild] = useState<BuildMod[]>([]);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const initialQuery = params.get("q")?.trim();
+  const params = new URLSearchParams(window.location.search);
+  const initialQuery = params.get("q")?.trim();
 
-    if (initialQuery) {
-      setQuery(initialQuery);
-      searchMods(initialQuery);
-    }
-
-    setBuild(getBuild());
-  }, []);
-
-  async function searchMods(
-    eventOrQuery?: FormEvent | string
-  ) {
-    if (typeof eventOrQuery !== "string") {
-      eventOrQuery?.preventDefault();
-    }
-
-    const searchQuery =
-      typeof eventOrQuery === "string"
-        ? eventOrQuery.trim()
-        : query.trim();
-
-    if (!searchQuery) return;
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const response = await fetch(
-        `/api/mods?q=${encodeURIComponent(searchQuery)}`
-      );
-
-      if (!response.ok) {
-        throw new Error("Search failed");
-      }
-
-      const data: SearchResponse = await response.json();
-      setMods(data.hits);
-    } catch {
-      setError("Не удалось получить моды. Попробуй ещё раз.");
-    } finally {
-      setLoading(false);
-    }
+  if (initialQuery) {
+    setQuery(initialQuery);
+    searchMods(initialQuery);
   }
+
+  setBuild(getBuild());
+}, []);
+
+  useEffect(() => {
+  const normalizedQuery = query.trim();
+
+  if (normalizedQuery.length < 3) {
+    setMods([]);
+    setError("");
+    setLoading(false);
+    return;
+  }
+
+  const timeout = setTimeout(() => {
+    searchMods(normalizedQuery);
+  }, 300);
+
+  return () => clearTimeout(timeout);
+}, [query]);
+
+  async function searchMods(searchQuery: string) {
+  const normalizedQuery = searchQuery.trim();
+
+  if (normalizedQuery.length < 3) {
+    setMods([]);
+    setError("");
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const response = await fetch(
+      `/api/mods?q=${encodeURIComponent(normalizedQuery)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Search failed");
+    }
+
+    const data: SearchResponse = await response.json();
+    setMods(data.results);
+  } catch {
+    setError("Не удалось получить моды. Попробуй ещё раз.");
+  } finally {
+    setLoading(false);
+  }
+}
 
   return (
     <main className="min-h-screen bg-zinc-950 text-white">
@@ -112,7 +129,13 @@ export default function ModsPage() {
             этапом.
           </p>
 
-          <form onSubmit={searchMods} className="mt-8 flex gap-3">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              searchMods(query);
+            }}
+            className="mt-8 flex gap-3"
+          >
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}

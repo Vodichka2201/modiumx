@@ -3,7 +3,6 @@
 import { FormEvent, useState } from "react";
 
 export default function Home() {
-
   const [query, setQuery] = useState("");
 
   function handleSearch(event: FormEvent) {
@@ -26,39 +25,41 @@ export default function Home() {
             Modium<span className="text-violet-400">X</span>
           </a>
 
-          <nav className="hidden items-center gap-8 text-sm text-zinc-400 md:flex">
-            <a href="/mods" className="transition hover:text-white">
+          <nav className="flex items-center gap-8 text-sm text-zinc-400">
+            <a
+              href="/mods"
+              className="transition hover:text-white"
+            >
               Моды
             </a>
-            <a href="/build" className="transition hover:text-white">
+
+            <a
+              href="/build"
+              className="transition hover:text-white"
+            >
               Моя сборка
             </a>
-            <a href="#" className="transition hover:text-white">
-              Сборки
-            </a>
           </nav>
-
-          <button className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm transition hover:bg-white/10">
-            Войти
-          </button>
         </div>
       </header>
 
       {/* Hero */}
-      <section className="mx-auto max-w-7xl px-6 pb-20 pt-24">
-        <div className="mx-auto max-w-3xl text-center">
+      <section className="mx-auto max-w-7xl px-6 pb-24 pt-24">
+        <div className="mx-auto max-w-4xl text-center">
           <div className="mb-6 inline-flex rounded-full border border-violet-400/20 bg-violet-400/10 px-4 py-2 text-sm text-violet-300">
-            Minecraft modpack builder
+            Minecraft mod compatibility
           </div>
 
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl">
-            Собери свой Minecraft
-            <span className="block text-violet-400">без боли с совместимостью</span>
+            Проверь совместимость
+            <span className="block text-violet-400">
+              своей сборки
+            </span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-zinc-400">
-            Найди нужные моды, добавь их в сборку и узнай, на каких версиях
-            Minecraft и загрузчиках они смогут работать вместе.
+            Добавь нужные моды и узнай, какие версии Minecraft и
+            загрузчики подходят для всей сборки.
           </p>
 
           {/* Search */}
@@ -85,129 +86,184 @@ export default function Home() {
               Найти моды
             </button>
           </form>
+
+          <div className="mt-5">
+            <a
+              href="/build"
+              className="text-sm text-zinc-500 transition hover:text-white"
+            >
+              Или сразу открыть мою сборку →
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* Selected mods */}
+      {/* How it works */}
       <section className="border-y border-white/10 bg-white/[0.02]">
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="text-sm font-medium text-violet-400">
-                YOUR BUILD
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">
-                Твоя сборка
-              </h2>
-              <p className="mt-2 text-sm text-zinc-500">
-                Здесь появятся моды, которые ты добавишь.
-              </p>
-            </div>
+        <div className="mx-auto max-w-7xl px-6 py-20">
+          <div className="max-w-2xl">
+            <p className="text-sm font-medium text-violet-400">
+              HOW IT WORKS
+            </p>
 
-            <button className="text-sm text-zinc-400 transition hover:text-white">
-              Открыть сборку →
-            </button>
+            <h2 className="mt-2 text-3xl font-bold">
+              От модов до рабочей конфигурации
+            </h2>
+
+            <p className="mt-4 leading-7 text-zinc-400">
+              ModiumX не устанавливает сборки и не скачивает моды.
+              Он проверяет их совместимость и показывает подходящие
+              комбинации.
+            </p>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
             {[
               {
-                name: "Sodium",
-                description: "Оптимизация графики",
-                color: "bg-blue-500",
+                number: "01",
+                title: "Добавь моды",
+                description:
+                  "Найди нужные моды и добавь их в свою сборку.",
               },
               {
-                name: "Iris Shaders",
-                description: "Шейдеры",
-                color: "bg-purple-500",
+                number: "02",
+                title: "Запусти проверку",
+                description:
+                  "ModiumX сопоставит версии Minecraft, loaders и доступные версии модов.",
               },
               {
-                name: "Lithium",
-                description: "Оптимизация сервера",
-                color: "bg-green-500",
+                number: "03",
+                title: "Найди рабочий вариант",
+                description:
+                  "Получи совместимые конфигурации и узнай, где возникают проблемы.",
               },
-              {
-                name: "Mod Menu",
-                description: "Управление модами",
-                color: "bg-orange-500",
-              },
-            ].map((mod) => (
+            ].map((step) => (
               <div
-                key={mod.name}
-                className="group rounded-2xl border border-white/10 bg-zinc-900 p-5 transition hover:-translate-y-1 hover:border-white/20"
+                key={step.number}
+                className="rounded-2xl border border-white/10 bg-zinc-900 p-6"
               >
-                <div
-                  className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl ${mod.color} text-lg font-bold`}
-                >
-                  {mod.name.charAt(0)}
-                </div>
+                <span className="text-sm font-medium text-violet-400">
+                  {step.number}
+                </span>
 
-                <h3 className="font-semibold">{mod.name}</h3>
-                <p className="mt-1 text-sm text-zinc-500">
-                  {mod.description}
+                <h3 className="mt-5 text-lg font-semibold">
+                  {step.title}
+                </h3>
+
+                <p className="mt-2 text-sm leading-6 text-zinc-500">
+                  {step.description}
                 </p>
-
-                <div className="mt-5 flex items-center justify-between">
-                  <span className="text-xs text-zinc-600">
-                    Fabric · 1.21.1
-                  </span>
-
-                  <button className="text-sm text-zinc-500 transition hover:text-red-400">
-                    Удалить
-                  </button>
-                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Compatibility */}
+      {/* Compatibility Preview */}
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="max-w-2xl">
-          <p className="text-sm font-medium text-violet-400">
-            COMPATIBILITY
-          </p>
+        <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <p className="text-sm font-medium text-violet-400">
+              COMPATIBILITY
+            </p>
 
-          <h2 className="mt-2 text-3xl font-bold">
-            Найди точку совместимости
-          </h2>
+            <h2 className="mt-2 text-3xl font-bold">
+              Найди точку совместимости
+            </h2>
 
-          <p className="mt-4 leading-7 text-zinc-400">
-            ModiumX сопоставит выбранные моды и покажет комбинации Minecraft
-            и загрузчиков, в которых твоя сборка сможет работать.
-          </p>
-        </div>
+            <p className="mt-4 max-w-xl leading-7 text-zinc-400">
+              Одна и та же сборка может работать на нескольких
+              версиях Minecraft и loaders. ModiumX показывает эти
+              варианты и помогает выбрать подходящий.
+            </p>
 
-        <div className="mt-10 overflow-hidden rounded-2xl border border-white/10">
-          <div className="grid grid-cols-3 border-b border-white/10 bg-white/5 px-6 py-4 text-sm font-medium text-zinc-400">
-            <span>Версия Minecraft</span>
-            <span>Loader</span>
-            <span>Совместимость</span>
+            <a
+              href="/build"
+              className="mt-7 inline-flex rounded-xl bg-white px-5 py-3 text-sm font-medium text-black transition hover:bg-zinc-200"
+            >
+              Проверить сборку
+            </a>
           </div>
 
-          {[
-            ["1.21.1", "Fabric", "Все моды совместимы"],
-            ["1.21.4", "Fabric", "Все моды совместимы"],
-            ["1.21.5", "Fabric", "Не хватает Lithium"],
-          ].map(([version, loader, result]) => (
-            <div
-              key={version}
-              className="grid grid-cols-3 items-center border-b border-white/5 px-6 py-5 text-sm last:border-0"
-            >
-              <span className="font-medium">{version}</span>
-              <span className="text-zinc-400">{loader}</span>
-              <span
-                className={
-                  result.startsWith("Все")
-                    ? "text-emerald-400"
-                    : "text-red-400"
-                }
-              >
-                {result}
+          <div className="rounded-2xl border border-white/10 bg-zinc-900 p-6 shadow-2xl shadow-black/20">
+            <div className="flex items-center justify-between border-b border-white/10 pb-5">
+              <div>
+                <p className="text-sm text-zinc-500">
+                  Совместимая конфигурация
+                </p>
+
+                <h3 className="mt-1 text-xl font-semibold">
+                  Minecraft 1.21.1
+                </h3>
+              </div>
+
+              <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+                Совместимо
               </span>
             </div>
-          ))}
+
+            <div className="mt-5 flex items-center justify-between">
+              <span className="text-sm text-zinc-400">
+                Loader
+              </span>
+
+              <span className="font-medium">
+                Fabric
+              </span>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {["Sodium", "Iris", "Lithium", "Mod Menu"].map(
+                (mod) => (
+                  <div
+                    key={mod}
+                    className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3"
+                  >
+                    <span className="text-sm text-zinc-300">
+                      {mod}
+                    </span>
+
+                    <span className="text-sm font-semibold text-emerald-400">
+                      ✓
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="mt-5 border-t border-white/10 pt-5">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-zinc-500">
+                  Совместимость
+                </span>
+
+                <span className="font-medium text-emerald-400">
+                  4 / 4 модов
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="border-t border-white/10">
+        <div className="mx-auto max-w-7xl px-6 py-20 text-center">
+          <h2 className="text-3xl font-bold">
+            Готов проверить свою сборку?
+          </h2>
+
+          <p className="mx-auto mt-4 max-w-xl text-zinc-500">
+            Добавь моды и найди версии Minecraft и loader,
+            которые подходят именно твоей сборке.
+          </p>
+
+          <a
+            href="/build"
+            className="mt-8 inline-flex rounded-xl bg-violet-500 px-7 py-3.5 font-medium transition hover:bg-violet-400"
+          >
+            Открыть мою сборку
+          </a>
         </div>
       </section>
 
@@ -217,81 +273,12 @@ export default function Home() {
           <span>
             Modium<span className="text-violet-400">X</span>
           </span>
-          <span>Найди моды. Собери сборку. Играй.</span>
+
+          <span>
+            Проверка совместимости Minecraft-модов
+          </span>
         </div>
       </footer>
     </main>
   );
 }
-
-/*
-import Image from "next/image";
-
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
-}
-*/
