@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ModiumX
 
-## Getting Started
+Проверка совместимости Minecraft-модов.
 
-First, run the development server:
+ModiumX позволяет проверить, какие версии Minecraft и загрузчики модов совместимы с выбранными модами.
+
+## Возможности
+
+* Поиск модов через Modrinth
+* Добавление модов в сборку
+* Проверка совместимости модов
+* Поддержка Fabric, Forge и NeoForge
+* Проверка разных версий Minecraft
+* Определение отсутствующих совместимых версий модов
+* Разделение стабильных и beta-версий
+* Проверка обязательных зависимостей
+* Поиск наиболее подходящей конфигурации
+
+## Как пользоваться
+
+1. Найдите нужные моды.
+2. Добавьте их в свою сборку.
+3. Выберите диапазон версий Minecraft.
+4. Запустите проверку.
+5. Посмотрите совместимые версии Minecraft и загрузчики.
+
+## Важно
+
+ModiumX **не скачивает и не устанавливает моды или сборки**.
+
+Сайт используется только для проверки совместимости и предоставляет ссылки на источники модов. Скачивание и установка выполняются на стороне соответствующих платформ.
+
+## Технологии
+
+* Next.js
+* TypeScript
+* Tailwind CSS
+* Modrinth API
+
+## Запуск
+
+Требуется Node.js и npm.
+
+Установить зависимости:
+
+```bash
+npm install
+```
+
+Запустить в режиме разработки:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+После запуска сайт будет доступен по адресу:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Для production-сборки:
 
-## Learn More
+```bash
+npm run build
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Статус
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Проект завершён в текущем виде и дальнейшая разработка не планируется.
