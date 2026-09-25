@@ -107,9 +107,6 @@ export default function ModsPage() {
             <a href="/build" className="transition hover:text-white">
               Моя сборка
             </a>
-            <a href="#" className="transition hover:text-white">
-              Сборки
-            </a>
           </nav>
         </div>
       </header>
